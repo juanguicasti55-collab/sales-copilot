@@ -286,7 +286,7 @@ const server = createServer(async (req, res) => {
   res.end('Not found');
 });
 
-server.listen(PORT, () => {
-  console.log(`\n🎯 Sales Copilot corriendo en http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🎯 Sales Copilot corriendo en http://0.0.0.0:${PORT}`);
   console.log('   Abre esta URL en tu navegador durante la llamada\n');
 });
