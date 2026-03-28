@@ -1,0 +1,23 @@
+{
+  "name": "ads-claude",
+  "version": "2.0.0",
+  "description": "Meta Ads Manager CLI – ADS CLAUDE",
+  "type": "module",
+  "scripts": {
+    "dashboard": "node src/server.js",
+    "accounts": "node src/cli.js accounts",
+    "campaigns": "node src/cli.js campaigns",
+    "insights": "node src/cli.js insights",
+    "adsets": "node src/cli.js adsets",
+    "ads": "node src/cli.js ads",
+    "countries": "node src/cli.js countries",
+    "top-ads": "node src/cli.js top-ads",
+    "pause": "node src/cli.js pause",
+    "activate": "node src/cli.js activate",
+    "budget": "node src/cli.js budget",
+    "copilot": "node src/sales-copilot.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7"
+  }
+}

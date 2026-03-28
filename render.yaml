@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: sales-copilot
+    runtime: node
+    buildCommand: npm install
+    startCommand: node src/sales-copilot.js
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: COPILOT_PORT
+        value: 3001

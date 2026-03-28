@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADS CLAUDE</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="hdr">
+    <h1><span class="logo">AC</span> ADS CLAUDE</h1>
+    <div class="hdr-r">
+      <select id="acct"><option>Cargando...</option></select>
+      <select id="date">
+        <option value="today">Hoy</option>
+        <option value="yesterday">Ayer</option>
+        <option value="last_3d">3d</option>
+        <option value="last_7d" selected>7d</option>
+        <option value="last_14d">14d</option>
+        <option value="last_30d">30d</option>
+        <option value="last_90d">90d</option>
+        <option value="this_month">Este mes</option>
+        <option value="last_month">Mes pasado</option>
+      </select>
+      <button class="btn btn-p" onclick="reload()">Actualizar</button>
+    </div>
+  </header>
+  <div class="main">
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-t="health">Salud</button>
+      <button class="tab" data-t="campaigns">Campanas</button>
+      <button class="tab" data-t="creatives">Creativos</button>
+      <button class="tab" data-t="funnel">Embudo</button>
+      <button class="tab" data-t="countries">Paises</button>
+    </div>
+    <div class="bc" id="bc" style="display:none"></div>
+    <div id="kpis" class="kpis"></div>
+    <div id="out"></div>
+  </div>
+  <div class="mo" id="bmod">
+    <div class="mo-box">
+      <h3>Cambiar Presupuesto</h3>
+      <input type="hidden" id="bid">
+      <label>Presupuesto diario (USD)</label>
+      <input type="number" id="bamt" step="0.01" placeholder="50.00">
+      <div class="mo-acts">
+        <button class="btn" onclick="Q('#bmod').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-p" onclick="saveBudget()">Guardar</button>
+      </div>
+    </div>
+  </div>
+  <div class="toasts" id="toasts"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

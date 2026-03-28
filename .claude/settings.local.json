@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(node src/cli.js accounts)",
+      "Bash(node src/cli.js campaigns act_676782231731413 last_7d)",
+      "Bash(node src/deep-ads.js 120243316290430508 120243308929650508)",
+      "Bash(node src/cli.js campaigns act_419589875530964 last_7d)",
+      "Bash(node src/deep-ads.js 120243313100610626 120243312528290626 120228371711590626)",
+      "Bash(node -e \":*)",
+      "mcp__scheduled-tasks__list_scheduled_tasks",
+      "mcp__5a2939e9-ddea-4c34-98c0-7058983377c6__generate",
+      "WebSearch",
+      "Bash(node src/sac-targeting.js)",
+      "WebFetch(domain:ninjatrader.sactraders.com)",
+      "Bash(node src/sac-pixel-info.js)",
+      "Bash(node src/create-sac-evergreen.js)",
+      "Bash(node src/create-sac-ads-only.js)",
+      "Bash(node src/create-last-ad.js)",
+      "Bash(node src/verify-sac-evergreen.js)",
+      "Bash(node src/verify-sac.js)",
+      "WebFetch(domain:trading-profesional.sactraders.com)",
+      "WebFetch(domain:pagespeed.web.dev)",
+      "Bash(curl -s \"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https://trading-profesional.sactraders.com/sactraders&strategy=mobile&category=performance\")",
+      "Bash(python3:*)",
+      "WebFetch(domain:symplementeventas.craft.me)",
+      "Bash(find /Users/juangonzalez/.claude -name SKILL.md -path *paid* -o -name SKILL.md -path *instagram* -o -name SKILL.md -path *growth*)",
+      "Bash(pip3 install:*)",
+      "Bash(ffprobe -v quiet -print_format json -show_format -show_streams '/Users/juangonzalez/Downloads/Utiliza estos códigos secretos para  ser más rápido que tu competencia 😎...#emprendimiento #jul.mp4')",
+      "mcp__Claude_Preview__preview_start"
+    ]
+  }
+}
