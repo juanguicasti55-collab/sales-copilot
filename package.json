@@ -4,6 +4,7 @@
   "description": "Meta Ads Manager CLI – ADS CLAUDE",
   "type": "module",
   "scripts": {
+    "start": "node src/sales-copilot.js",
     "dashboard": "node src/server.js",
     "accounts": "node src/cli.js accounts",
     "campaigns": "node src/cli.js campaigns",

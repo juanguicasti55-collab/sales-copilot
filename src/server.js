@@ -84,15 +84,17 @@ function enrichRow(row) {
   else if (videoViews > 0) { resultType = 'video views'; results = videoViews; costPerResult = costPerVideoView; }
   else if (postEngagement > 0) { resultType = 'engagement'; results = postEngagement; costPerResult = spend > 0 && postEngagement > 0 ? spend / postEngagement : null; }
 
-  // Video metrics from dedicated fields
-  const video3s = xVideo(row.video_3_sec_watched_actions);
-  const videoThru = xVideo(row.video_thruplay_watched_actions);
+  // Video metrics from dedicated fields (v21.0 compatible)
+  const videoPlays = xVideo(row.video_play_actions);
+  const videoAvg = xVideo(row.video_avg_time_watched_actions);
   const videoP25 = xVideo(row.video_p25_watched_actions);
   const videoP50 = xVideo(row.video_p50_watched_actions);
   const videoP75 = xVideo(row.video_p75_watched_actions);
   const videoP100 = xVideo(row.video_p100_watched_actions);
-  const hookRate = impressions > 0 && video3s > 0 ? (video3s / impressions * 100) : null;
-  const holdRate = video3s > 0 && videoThru > 0 ? (videoThru / video3s * 100) : null;
+  // Hook Rate = plays / impressions (how many start watching)
+  const hookRate = impressions > 0 && videoPlays > 0 ? (videoPlays / impressions * 100) : null;
+  // Hold Rate = p50 / plays (how many stay to half)
+  const holdRate = videoPlays > 0 && videoP50 > 0 ? (videoP50 / videoPlays * 100) : null;
 
   return {
     spend, impressions, clicks, ctr, cpc, cpm, frequency, roas,
@@ -100,14 +102,14 @@ function enrichRow(row) {
     pageEngagement, postEngagement, pageLikes, videoViews, messaging,
     cpa, cpl, costPerClick, costPerLike,
     resultType, results, costPerResult,
-    video3s, videoThru, videoP25, videoP50, videoP75, videoP100,
+    videoPlays, videoAvg, videoP25, videoP50, videoP75, videoP100,
     hookRate, holdRate,
   };
 }
 
 // ─── Field Sets ─────────────────────────────────────────────────────────────
 const BASE = 'spend,impressions,clicks,ctr,cpc,cpm,frequency,actions,cost_per_action_type,purchase_roas';
-const VIDEO_FIELDS = 'video_3_sec_watched_actions,video_thruplay_watched_actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions';
+const VIDEO_FIELDS = 'video_play_actions,video_avg_time_watched_actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions';
 
 // Fetch video metrics per-ad (more reliable than bulk)
 async function fetchVideoMetrics(adIds, datePreset) {
@@ -121,8 +123,8 @@ async function fetchVideoMetrics(adIds, datePreset) {
         });
         const row = data.data?.[0] || data;
         videoData[id] = {
-          video_3_sec_watched_actions: row.video_3_sec_watched_actions,
-          video_thruplay_watched_actions: row.video_thruplay_watched_actions,
+          video_play_actions: row.video_play_actions,
+          video_avg_time_watched_actions: row.video_avg_time_watched_actions,
           video_p25_watched_actions: row.video_p25_watched_actions,
           video_p50_watched_actions: row.video_p50_watched_actions,
           video_p75_watched_actions: row.video_p75_watched_actions,
