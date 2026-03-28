@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const PUBLIC = join(__dirname, '..', 'public');
-const PORT = process.env.COPILOT_PORT || 3001;
+const PORT = process.env.PORT || process.env.COPILOT_PORT || 3001;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 if (!ANTHROPIC_API_KEY) {
