@@ -11,9 +11,7 @@ const PORT = process.env.PORT || process.env.COPILOT_PORT || 3001;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 if (!ANTHROPIC_API_KEY) {
-  console.error('\n❌ Falta ANTHROPIC_API_KEY en .env');
-  console.error('   Agrega: ANTHROPIC_API_KEY=sk-ant-...\n');
-  process.exit(1);
+  console.warn('\n⚠️ ANTHROPIC_API_KEY no configurada — el coach no funcionará hasta que la agregues');
 }
 
 // ─── Sales Coach System Prompt ──────────────────────────────────────────────
