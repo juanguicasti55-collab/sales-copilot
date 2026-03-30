@@ -20,18 +20,22 @@ const COACH_MODEL = 'claude-haiku-4-5-20251001';
 const SUMMARY_MODEL = 'claude-sonnet-4-20250514';
 
 // ─── Sales Coach System Prompt ──────────────────────────────────────────────
-const SALES_COACH_SYSTEM = `Eres un coach de ventas en tiempo real. Tu rol: susurrarle al closer qué hacer AHORA.
+const SALES_COACH_SYSTEM = `Eres un coach de ventas en tiempo real. Tu rol: susurrarle al closer qué hacer AHORA MISMO.
 
-FORMATO OBLIGATORIO (máximo 3 líneas):
+CONTEXTO: Recibes fragmentos de audio transcrito de una llamada de ventas. El audio captura AMBAS personas hablando.
+Debes INFERIR por el contexto quién es el closer (el vendedor) y quién es el prospecto (el comprador).
+Normalmente quien hace preguntas, explica el producto y cierra = CLOSER. Quien duda, objeta, pregunta precio = PROSPECTO.
+Si hay info del prospecto al inicio del mensaje, úsala para personalizar.
+
+FORMATO OBLIGATORIO (máximo 3-4 líneas en total):
 [EMOJI] TIPO
-→ "Frase exacta para decir"
-(Por qué funciona)
+→ "Frase exacta que el closer debe decir"
+(Por qué funciona en 1 línea)
 
-EMOJIS: 🔴 OBJECIÓN | 🟡 SEÑAL | 🟢 CIERRE | 💡 TÁCTICA | ⚠️ ALERTA
+EMOJIS: 🔴 OBJECIÓN | 🟡 SEÑAL DE COMPRA | 🟢 MOMENTO DE CIERRE | 💡 TÁCTICA | ⚠️ ALERTA | 🔍 INSIGHT
 
-Los fragmentos vienen etiquetados como [CLOSER] o [PROSPECTO] — el closer es TU usuario, el prospecto es a quien le vendes.
-Solo da coaching cuando el PROSPECTO dice algo accionable o cuando el CLOSER comete un error.
-Si no hay nada accionable responde SOLO: ✅ Bien, sigue así
+Solo actúa cuando el prospecto dice algo accionable o el closer comete un error.
+Si la conversación va bien sin acción urgente: responde SOLO "✅ Bien, sigue así" — nada más.
 
 MANUAL DE OBJECIONES — USA ESTAS ESTRATEGIAS:
 
@@ -71,17 +75,19 @@ function getSession(sessionId) {
 }
 
 // ─── Claude API Call (Coach - Fast) ─────────────────────────────────────────
-async function askCoach(sessionId, newTranscript, callType, includeInsight = false) {
+async function askCoach(sessionId, newTranscript, callType, includeInsight = false, prospectInfo = '') {
   const session = getSession(sessionId);
 
-  const contextPrefix = callType ? `[TIPO: ${callType.toUpperCase()}] ` : '';
   const insightRequest = includeInsight
     ? '\n\nAdemás del coaching, agrega al final un bloque separado:\n🔍 INSIGHT\n→ (perfil del prospecto: tipo de comprador, objeciones reales, probabilidad de cierre 1-10, qué necesita escuchar para cerrar)'
     : '';
 
+  const prospectLine = prospectInfo ? `[PROSPECTO: ${prospectInfo}]\n` : '';
+  const typeLine = callType ? `[TIPO: ${callType.toUpperCase()}]\n` : '';
+
   session.messages.push({
     role: 'user',
-    content: `${contextPrefix}${newTranscript}\n\n¿Acción para el closer? Si nada, solo "✅ Bien, sigue así"${insightRequest}`
+    content: `${typeLine}${prospectLine}Conversación:\n${newTranscript}\n\n¿Acción para el closer? Si nada, solo "✅ Bien, sigue así"${insightRequest}`
   });
 
   if (session.messages.length > 30) session.messages = session.messages.slice(-30);
@@ -221,13 +227,13 @@ const server = createServer(async (req, res) => {
     req.on('data', c => body += c);
     req.on('end', async () => {
       try {
-        const { sessionId, transcript, callType, includeInsight } = JSON.parse(body);
+        const { sessionId, transcript, callType, includeInsight, prospectInfo } = JSON.parse(body);
         if (!transcript?.trim()) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'transcript vacío' }));
           return;
         }
-        const coaching = await askCoach(sessionId || 'default', transcript, callType, includeInsight);
+        const coaching = await askCoach(sessionId || 'default', transcript, callType, includeInsight, prospectInfo || '');
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ coaching }));
       } catch (e) {
