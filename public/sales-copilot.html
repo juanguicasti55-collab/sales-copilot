@@ -3,193 +3,113 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎯 Sales Copilot — Coach en Tiempo Real</title>
+<title>🎯 Sales Copilot</title>
 <style>
   :root {
-    --bg: #0a0a0f;
-    --surface: #14141f;
-    --surface2: #1e1e2e;
-    --border: #2a2a3e;
-    --text: #e0e0e0;
-    --muted: #888;
-    --accent: #6c5ce7;
-    --green: #00b894;
-    --red: #e74c3c;
-    --yellow: #fdcb6e;
-    --blue: #74b9ff;
-    --closer-color: #74b9ff;
-    --prospect-color: #fdcb6e;
+    --bg: #0a0a0f; --surface: #14141f; --surface2: #1e1e2e;
+    --border: #2a2a3e; --text: #e0e0e0; --muted: #888;
+    --accent: #6c5ce7; --green: #00b894; --red: #e74c3c;
+    --yellow: #fdcb6e; --blue: #74b9ff;
+    --closer-color: #74b9ff; --prospect-color: #fdcb6e;
   }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  /* Header */
+  header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; gap:10px; flex-wrap:wrap; }
+  .logo { font-size:16px; font-weight:700; white-space:nowrap; }
+  .prospect-input { flex:1; min-width:200px; background:var(--surface2); color:var(--text); border:1px solid var(--border); padding:6px 12px; border-radius:8px; font-size:13px; }
+  .prospect-input::placeholder { color:var(--muted); }
+  .status-badge { display:flex; align-items:center; gap:6px; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; white-space:nowrap; }
+  .status-badge.listening { background:rgba(0,184,148,.15); color:var(--green); }
+  .status-badge.paused { background:rgba(253,203,110,.15); color:var(--yellow); }
+  .status-badge.off { background:rgba(136,136,136,.15); color:var(--muted); }
+  .pulse { width:7px; height:7px; border-radius:50%; background:currentColor; animation:pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+  /* Controls */
+  .controls { display:flex; align-items:center; gap:6px; padding:8px 16px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; flex-wrap:wrap; }
+  select.call-type { background:var(--surface2); color:var(--text); border:1px solid var(--border); padding:7px 10px; border-radius:8px; font-size:13px; cursor:pointer; }
+  .btn { padding:7px 14px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all .2s; white-space:nowrap; }
+  .btn-start { background:var(--green); color:#fff; }
+  .btn-stop { background:var(--red); color:#fff; }
+  .btn-summary { background:var(--accent); color:#fff; }
+  .btn-secondary { background:var(--surface2); color:var(--muted); border:1px solid var(--border); }
+  .btn-mini { background:var(--surface2); color:var(--blue); border:1px solid var(--border); }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
 
-  /* ─── Header ─── */
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 20px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
+  /* Speaker Toggle */
+  .speaker-wrap { display:flex; align-items:center; gap:4px; }
+  .speaker-label-txt { font-size:11px; color:var(--muted); }
+  .speaker-toggle { display:flex; border:2px solid var(--border); border-radius:8px; overflow:hidden; }
+  .spk-btn { padding:5px 12px; border:none; font-size:12px; font-weight:700; cursor:pointer; transition:all .2s; background:var(--surface2); color:var(--muted); }
+  .spk-btn.active-closer { background:rgba(116,185,255,.25); color:var(--closer-color); }
+  .spk-btn.active-prospect { background:rgba(253,203,110,.25); color:var(--prospect-color); }
 
-  .logo { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  /* Layout */
+  .main { display:grid; grid-template-columns:1fr 1fr; flex:1; overflow:hidden; }
+  .panel { display:flex; flex-direction:column; overflow:hidden; }
+  .panel-hdr { padding:8px 14px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; }
+  .panel-left { border-right:1px solid var(--border); }
+  .panel-body { flex:1; overflow-y:auto; padding:12px; }
 
-  .status-badge {
-    display: flex; align-items: center; gap: 6px;
-    padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600;
-  }
-  .status-badge.listening { background: rgba(0, 184, 148, 0.15); color: var(--green); }
-  .status-badge.paused { background: rgba(253, 203, 110, 0.15); color: var(--yellow); }
-  .status-badge.off { background: rgba(136, 136, 136, 0.15); color: var(--muted); }
+  /* Transcript */
+  .t-line { padding:7px 10px; margin-bottom:5px; border-radius:7px; font-size:13px; line-height:1.5; background:var(--surface2); border-left:3px solid var(--border); }
+  .t-line.is-closer { border-left-color:var(--closer-color); }
+  .t-line.is-prospect { border-left-color:var(--prospect-color); background:rgba(253,203,110,.05); }
+  .t-line.is-interim { border-left-color:var(--green); opacity:.7; }
+  .t-meta { font-size:10px; color:var(--muted); margin-bottom:3px; display:flex; align-items:center; gap:6px; }
+  .spk-tag { font-weight:700; padding:1px 5px; border-radius:4px; font-size:10px; }
+  .spk-tag.closer { color:var(--closer-color); background:rgba(116,185,255,.12); }
+  .spk-tag.prospect { color:var(--prospect-color); background:rgba(253,203,110,.12); }
 
-  .pulse { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 1.5s infinite; }
-  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+  /* Coach Cards */
+  .c-card { padding:12px 14px; margin-bottom:8px; border-radius:9px; font-size:13px; line-height:1.6; animation:slideIn .3s ease; white-space:pre-wrap; }
+  @keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .c-card.objection { background:rgba(231,76,60,.1); border:1px solid rgba(231,76,60,.3); }
+  .c-card.signal { background:rgba(253,203,110,.1); border:1px solid rgba(253,203,110,.3); }
+  .c-card.close { background:rgba(0,184,148,.1); border:1px solid rgba(0,184,148,.3); }
+  .c-card.tactic { background:rgba(116,185,255,.1); border:1px solid rgba(116,185,255,.3); }
+  .c-card.alert { background:rgba(231,76,60,.15); border:1px solid rgba(231,76,60,.4); }
+  .c-card.insight { background:rgba(108,92,231,.1); border:1px solid rgba(108,92,231,.3); }
+  .c-card.ok { background:rgba(0,184,148,.05); border:1px solid rgba(0,184,148,.15); color:var(--muted); }
+  .c-time { font-size:10px; color:var(--muted); margin-top:5px; }
 
-  /* ─── Controls ─── */
-  .controls {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 20px; background: var(--surface);
-    border-bottom: 1px solid var(--border); flex-shrink: 0;
-    flex-wrap: wrap;
-  }
+  /* Loading */
+  .loading { display:inline-flex; gap:4px; padding:6px 0; }
+  .loading span { width:5px; height:5px; background:var(--accent); border-radius:50%; animation:bounce 1.2s infinite; }
+  .loading span:nth-child(2){animation-delay:.2s} .loading span:nth-child(3){animation-delay:.4s}
+  @keyframes bounce { 0%,80%,100%{transform:scale(.6);opacity:.4} 40%{transform:scale(1);opacity:1} }
 
-  .call-type-select {
-    background: var(--surface2); color: var(--text);
-    border: 1px solid var(--border); padding: 8px 14px;
-    border-radius: 8px; font-size: 14px; cursor: pointer;
-  }
+  /* Empty */
+  .empty { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:var(--muted); text-align:center; gap:10px; }
+  .empty .icon { font-size:40px; }
+  .empty p { font-size:13px; max-width:240px; line-height:1.5; }
 
-  .btn {
-    padding: 8px 18px; border: none; border-radius: 8px;
-    font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
-  }
-  .btn-start { background: var(--green); color: #fff; }
-  .btn-start:hover { background: #00a884; }
-  .btn-stop { background: var(--red); color: #fff; }
-  .btn-stop:hover { background: #c0392b; }
-  .btn-summary { background: var(--accent); color: #fff; }
-  .btn-summary:hover { background: #5a4bd1; }
-  .btn-reset { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
-  .btn-mini { background: var(--surface2); color: var(--blue); border: 1px solid var(--border); margin-left: auto; }
-  .btn-mini:hover { background: rgba(116, 185, 255, 0.15); }
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  /* Modal */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:100; align-items:center; justify-content:center; }
+  .modal-overlay.show { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:14px; width:90%; max-width:680px; max-height:80vh; display:flex; flex-direction:column; }
+  .modal-hdr { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border); }
+  .modal-hdr h2 { font-size:16px; }
+  .modal-body { padding:18px; overflow-y:auto; font-size:13px; line-height:1.7; white-space:pre-wrap; }
+  .modal-ftr { padding:10px 18px; border-top:1px solid var(--border); display:flex; gap:8px; justify-content:flex-end; }
+  .btn-copy { background:var(--accent); color:#fff; }
 
-  /* ─── Speaker Toggle ─── */
-  .speaker-toggle {
-    display: flex; align-items: center; gap: 0;
-    border: 2px solid var(--border); border-radius: 10px; overflow: hidden;
-  }
-  .speaker-btn {
-    padding: 6px 14px; border: none; font-size: 13px; font-weight: 700;
-    cursor: pointer; transition: all 0.2s; background: var(--surface2); color: var(--muted);
-  }
-  .speaker-btn.active-closer {
-    background: rgba(116, 185, 255, 0.25); color: var(--closer-color);
-    box-shadow: inset 0 0 8px rgba(116, 185, 255, 0.2);
-  }
-  .speaker-btn.active-prospect {
-    background: rgba(253, 203, 110, 0.25); color: var(--prospect-color);
-    box-shadow: inset 0 0 8px rgba(253, 203, 110, 0.2);
-  }
+  /* Mini mode */
+  body.mini header { padding:6px 10px; }
+  body.mini .logo { font-size:13px; }
+  body.mini .controls { padding:5px 10px; gap:4px; }
+  body.mini .btn { padding:5px 9px; font-size:11px; }
+  body.mini select.call-type { padding:5px 8px; font-size:11px; }
+  body.mini .spk-btn { padding:4px 9px; font-size:11px; }
+  body.mini .main { grid-template-columns:1fr; }
+  body.mini .panel-left { display:none; }
+  body.mini .prospect-input { display:none; }
 
-  /* ─── Main Layout ─── */
-  .main { display: grid; grid-template-columns: 1fr 1fr; gap: 0; flex: 1; overflow: hidden; }
-  .panel { display: flex; flex-direction: column; overflow: hidden; }
-  .panel-header {
-    padding: 10px 16px; font-size: 13px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 1px; color: var(--muted);
-    background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0;
-  }
-  .panel-left { border-right: 1px solid var(--border); }
-  .panel-body { flex: 1; overflow-y: auto; padding: 16px; scroll-behavior: smooth; }
-
-  /* ─── Transcript ─── */
-  .transcript-line {
-    padding: 8px 12px; margin-bottom: 6px; border-radius: 8px;
-    font-size: 14px; line-height: 1.5; background: var(--surface2);
-    border-left: 3px solid var(--border);
-  }
-  .transcript-line .time { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
-  .transcript-line .speaker-label {
-    font-size: 11px; font-weight: 700; margin-bottom: 2px; display: inline-block;
-    padding: 1px 6px; border-radius: 4px;
-  }
-  .transcript-line .speaker-closer {
-    color: var(--closer-color); background: rgba(116, 185, 255, 0.1);
-  }
-  .transcript-line .speaker-prospect {
-    color: var(--prospect-color); background: rgba(253, 203, 110, 0.1);
-  }
-  .transcript-current { border-left-color: var(--green); background: rgba(0, 184, 148, 0.08); }
-  .transcript-closer { border-left-color: var(--closer-color); }
-  .transcript-prospect { border-left-color: var(--prospect-color); }
-
-  /* ─── Coaching Cards ─── */
-  .coach-card {
-    padding: 14px 16px; margin-bottom: 10px; border-radius: 10px;
-    font-size: 14px; line-height: 1.6; animation: slideIn 0.3s ease; white-space: pre-wrap;
-  }
-  @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  .coach-card.objection { background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); }
-  .coach-card.signal { background: rgba(253, 203, 110, 0.1); border: 1px solid rgba(253, 203, 110, 0.3); }
-  .coach-card.close { background: rgba(0, 184, 148, 0.1); border: 1px solid rgba(0, 184, 148, 0.3); }
-  .coach-card.tactic { background: rgba(116, 185, 255, 0.1); border: 1px solid rgba(116, 185, 255, 0.3); }
-  .coach-card.alert { background: rgba(231, 76, 60, 0.15); border: 1px solid rgba(231, 76, 60, 0.4); }
-  .coach-card.ok { background: rgba(0, 184, 148, 0.05); border: 1px solid rgba(0, 184, 148, 0.15); color: var(--muted); }
-  .coach-time { font-size: 11px; color: var(--muted); margin-top: 6px; }
-
-  /* ─── Summary Modal ─── */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
-  .modal-overlay.show { display: flex; }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 700px; max-height: 80vh; display: flex; flex-direction: column; }
-  .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
-  .modal-header h2 { font-size: 18px; }
-  .modal-body { padding: 20px; overflow-y: auto; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
-  .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
-  .btn-copy { background: var(--accent); color: #fff; }
-  .btn-close-modal { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-
-  /* ─── Loading ─── */
-  .loading { display: inline-flex; gap: 4px; padding: 8px 0; }
-  .loading span { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: bounce 1.2s infinite; }
-  .loading span:nth-child(2) { animation-delay: 0.2s; }
-  .loading span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
-
-  /* ─── Empty State ─── */
-  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--muted); text-align: center; gap: 12px; }
-  .empty-state .icon { font-size: 48px; }
-  .empty-state p { font-size: 14px; max-width: 280px; }
-
-  /* ─── Mini Mode ─── */
-  body.mini-mode header { padding: 6px 12px; }
-  body.mini-mode .logo { font-size: 14px; }
-  body.mini-mode .controls { padding: 6px 12px; gap: 4px; }
-  body.mini-mode .btn { padding: 5px 10px; font-size: 12px; }
-  body.mini-mode .call-type-select { padding: 5px 8px; font-size: 12px; }
-  body.mini-mode .speaker-btn { padding: 4px 10px; font-size: 11px; }
-  body.mini-mode .main { grid-template-columns: 1fr; }
-  body.mini-mode .panel-left { display: none; }
-  body.mini-mode .coach-card { padding: 10px 12px; font-size: 13px; margin-bottom: 6px; }
-  body.mini-mode .panel-header { padding: 6px 12px; font-size: 11px; }
-  body.mini-mode .status-badge { font-size: 11px; padding: 2px 8px; }
-
-  /* ─── Responsive ─── */
-  @media (max-width: 768px) {
-    .main { grid-template-columns: 1fr; grid-template-rows: 40% 60%; }
-    .panel-left { border-right: none; border-bottom: 1px solid var(--border); }
+  @media(max-width:700px) {
+    .main { grid-template-columns:1fr; grid-template-rows:40% 60%; }
+    .panel-left { border-right:none; border-bottom:1px solid var(--border); }
   }
 </style>
 </head>
@@ -197,50 +117,52 @@
 
 <header>
   <div class="logo">🎯 Sales Copilot</div>
+  <input class="prospect-input" id="prospectInfo" placeholder="Nombre del prospecto + contexto breve (ej: Carlos, dueño de agencia, 10 empleados)" />
   <div class="status-badge off" id="statusBadge">
-    <div class="pulse"></div>
-    <span id="statusText">Inactivo</span>
+    <div class="pulse"></div><span id="statusText">Inactivo</span>
   </div>
 </header>
 
 <div class="controls">
-  <select class="call-type-select" id="callType">
+  <select class="call-type" id="callType">
     <option value="ventas">🔥 Venta</option>
     <option value="onboarding">🚀 Onboarding</option>
-    <option value="consultoria">💡 Consultoría / Mentoría</option>
+    <option value="consultoria">💡 Consultoría</option>
   </select>
 
-  <!-- Speaker Toggle -->
-  <div class="speaker-toggle">
-    <button class="speaker-btn active-closer" id="btnCloser" onclick="setSpeaker('closer')">🎙 Closer</button>
-    <button class="speaker-btn" id="btnProspect" onclick="setSpeaker('prospect')">👤 Prospecto</button>
+  <div class="speaker-wrap">
+    <span class="speaker-label-txt">Habla:</span>
+    <div class="speaker-toggle">
+      <button class="spk-btn active-closer" id="btnCloser" onclick="setSpeaker('closer')">🎙 Yo</button>
+      <button class="spk-btn" id="btnProspect" onclick="setSpeaker('prospect')">👤 Prospecto</button>
+    </div>
   </div>
 
   <button class="btn btn-start" id="btnStart" onclick="startListening()">▶ Iniciar</button>
   <button class="btn btn-stop" id="btnStop" onclick="stopListening()" disabled>⏹ Detener</button>
-
   <button class="btn btn-summary" id="btnSummary" onclick="requestSummary()" disabled>📋 Resumen</button>
-  <button class="btn btn-reset" onclick="resetSession()">🔄 Nueva</button>
-  <button class="btn btn-mini" onclick="openMiniWindow()" title="Abrir ventana mini">🪟 Mini</button>
+  <button class="btn btn-secondary" onclick="resetSession()">🔄 Nueva</button>
+  <button class="btn btn-mini" onclick="openMini()">🪟 Mini</button>
 </div>
 
 <div class="main">
   <div class="panel panel-left">
-    <div class="panel-header">📝 Transcripción en vivo</div>
+    <div class="panel-hdr">📝 Transcripción</div>
     <div class="panel-body" id="transcriptPanel">
-      <div class="empty-state">
+      <div class="empty">
         <div class="icon">🎙️</div>
-        <p>Presiona <strong>Iniciar</strong> y usa el toggle <strong>Closer/Prospecto</strong> para identificar quién habla</p>
+        <p>Ingresa el nombre del prospecto arriba, selecciona el tipo de llamada y presiona <strong>Iniciar</strong></p>
+        <p style="font-size:11px;color:var(--muted)">Usa el toggle <strong>Yo / Prospecto</strong> para marcar quién habla. Atajo: <kbd style="background:var(--surface2);padding:1px 5px;border-radius:3px">Tab</kbd></p>
       </div>
     </div>
   </div>
 
   <div class="panel">
-    <div class="panel-header">🧠 Coach en Tiempo Real</div>
+    <div class="panel-hdr" id="coachHdr">🧠 Coach — <span id="prospectLabel">esperando inicio...</span></div>
     <div class="panel-body" id="coachPanel">
-      <div class="empty-state">
+      <div class="empty">
         <div class="icon">🎯</div>
-        <p>Las sugerencias del coach aparecerán aquí conforme avance la conversación</p>
+        <p>El coach analizará la conversación y te dará sugerencias en tiempo real basadas en tu manual de objeciones</p>
       </div>
     </div>
   </div>
@@ -249,369 +171,284 @@
 <!-- Summary Modal -->
 <div class="modal-overlay" id="summaryModal">
   <div class="modal">
-    <div class="modal-header">
+    <div class="modal-hdr">
       <h2>📋 Resumen de la Llamada</h2>
-      <button class="btn btn-close-modal" onclick="closeSummary()">✕</button>
+      <button class="btn btn-secondary" onclick="closeSummary()">✕</button>
     </div>
     <div class="modal-body" id="summaryContent"></div>
-    <div class="modal-footer">
+    <div class="modal-ftr">
       <button class="btn btn-copy" onclick="copySummary()">📋 Copiar</button>
-      <button class="btn btn-close-modal" onclick="closeSummary()">Cerrar</button>
+      <button class="btn btn-secondary" onclick="closeSummary()">Cerrar</button>
     </div>
   </div>
 </div>
 
 <script>
-// ─── State ──────────────────────────────────────────────────────────────────
+// ─── State ───────────────────────────────────────────────────────────────────
 let recognition = null;
 let isListening = false;
-let sessionId = 'session_' + Date.now();
-let currentTranscript = '';
+let sessionId = 'sess_' + Date.now();
 let currentSpeaker = 'closer';
 let sendTimer = null;
-let transcriptStarted = false;
-let coachStarted = false;
-let pendingChunks = []; // Buffer chunks with speaker info
+let buffer = '';        // current speaker's buffered text
+let transcriptLog = []; // [{time, speaker, text}]
+let coachReady = false;
+let msgCount = 0;       // count prospect messages for insight trigger
 
 const API_BASE = window.location.origin;
 
-// ─── Speaker Toggle ─────────────────────────────────────────────────────────
+// ─── Speaker Toggle ──────────────────────────────────────────────────────────
 function setSpeaker(who) {
+  if (currentSpeaker === who) return;
+  flushBuffer();
   currentSpeaker = who;
-  const btnC = document.getElementById('btnCloser');
-  const btnP = document.getElementById('btnProspect');
+  document.getElementById('btnCloser').className  = 'spk-btn' + (who==='closer'   ? ' active-closer'   : '');
+  document.getElementById('btnProspect').className = 'spk-btn' + (who==='prospect' ? ' active-prospect' : '');
+}
 
-  btnC.className = 'speaker-btn' + (who === 'closer' ? ' active-closer' : '');
-  btnP.className = 'speaker-btn' + (who === 'prospect' ? ' active-prospect' : '');
+function flushBuffer() {
+  if (!buffer.trim()) return;
+  const entry = { time: now(), speaker: currentSpeaker, text: buffer.trim() };
+  transcriptLog.push(entry);
+  renderTranscriptLine(entry);
+  buffer = '';
 
-  // Send any buffered transcript before switching
-  if (currentTranscript.trim()) {
-    flushTranscript();
+  // Only send to coach when prospect finishes speaking OR every 2 closer lines
+  const shouldSend = entry.speaker === 'prospect';
+  if (shouldSend) {
+    clearTimeout(sendTimer);
+    msgCount++;
+    const needsInsight = msgCount % 4 === 0; // insight every 4 prospect messages
+    sendToCoach(buildCoachPayload(), needsInsight);
   }
 }
 
-function flushTranscript() {
-  if (!currentTranscript.trim()) return;
-  const chunk = { speaker: currentSpeaker, text: currentTranscript.trim() };
-  pendingChunks.push(chunk);
-  currentTranscript = '';
-
-  // Send to coach after short pause
-  clearTimeout(sendTimer);
-  sendTimer = setTimeout(() => {
-    if (pendingChunks.length > 0) {
-      const formatted = pendingChunks.map(c =>
-        `[${c.speaker === 'closer' ? 'CLOSER' : 'PROSPECTO'}]: ${c.text}`
-      ).join('\n');
-      sendToCoach(formatted);
-      pendingChunks = [];
-    }
-  }, 1500);
+function buildCoachPayload() {
+  // Send last 8 lines for context
+  const recent = transcriptLog.slice(-8)
+    .map(e => `[${e.speaker === 'closer' ? 'CLOSER' : 'PROSPECTO'}]: ${e.text}`)
+    .join('\n');
+  const prospect = document.getElementById('prospectInfo').value.trim();
+  return prospect ? `[PROSPECTO INFO: ${prospect}]\n\n${recent}` : recent;
 }
 
-// ─── Web Speech API ─────────────────────────────────────────────────────────
-function initSpeechRecognition() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome.');
-    return null;
-  }
+// ─── Speech Recognition ───────────────────────────────────────────────────────
+function initRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('Necesitas Chrome para usar reconocimiento de voz.'); return null; }
 
-  const rec = new SpeechRecognition();
-  rec.continuous = true;
-  rec.interimResults = true;
-  rec.lang = 'es-ES';
-  rec.maxAlternatives = 1;
+  const r = new SR();
+  r.continuous = true;
+  r.interimResults = true;
+  r.lang = 'es-ES';
+  r.maxAlternatives = 1;
 
-  rec.onresult = (event) => {
-    let interim = '';
-    let final = '';
-
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        final += transcript + ' ';
-      } else {
-        interim += transcript;
-      }
+  r.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t + ' ';
+      else interim += t;
     }
-
-    if (interim) {
-      updateCurrentLine(interim);
-    }
-
+    if (interim) showInterim(interim);
     if (final.trim()) {
-      addTranscriptLine(final.trim(), currentSpeaker);
-      currentTranscript += final;
-
-      // Auto-flush after 1.5s of silence
+      removeInterim();
+      buffer += final;
+      // Auto-flush after 1.5s silence
       clearTimeout(sendTimer);
-      sendTimer = setTimeout(() => flushTranscript(), 1500);
+      sendTimer = setTimeout(flushBuffer, 1500);
     }
   };
 
-  rec.onerror = (event) => {
-    console.error('Speech error:', event.error);
-    if (event.error === 'not-allowed') {
-      alert('Permiso de micrófono denegado. Permite el acceso al micrófono.');
-      stopListening();
-    }
-    if ((event.error === 'network' || event.error === 'aborted') && isListening) {
-      setTimeout(() => { if (isListening) try { rec.start(); } catch(e) {} }, 500);
-    }
+  r.onerror = (e) => {
+    if (e.error === 'not-allowed') { alert('Permiso de micrófono denegado. Actívalo en Chrome.'); stopListening(); return; }
+    if (isListening) setTimeout(() => { try { r.start(); } catch(_){} }, 600);
   };
 
-  rec.onend = () => {
-    if (isListening) {
-      try { rec.start(); } catch(e) {}
-    }
-  };
-
-  return rec;
+  r.onend = () => { if (isListening) { try { r.start(); } catch(_){} } };
+  return r;
 }
 
-// ─── Controls ───────────────────────────────────────────────────────────────
 function startListening() {
-  if (!recognition) {
-    recognition = initSpeechRecognition();
-    if (!recognition) return;
-  }
+  if (!recognition) { recognition = initRecognition(); if (!recognition) return; }
   try {
     recognition.start();
     isListening = true;
-    updateStatus('listening');
+    setStatus('listening');
     document.getElementById('btnStart').disabled = true;
     document.getElementById('btnStop').disabled = false;
     document.getElementById('btnSummary').disabled = false;
-    if (!transcriptStarted) {
+    // Update coach header with prospect name
+    const name = document.getElementById('prospectInfo').value.trim().split(',')[0] || 'Prospecto';
+    document.getElementById('prospectLabel').textContent = name;
+    if (transcriptLog.length === 0) {
       document.getElementById('transcriptPanel').innerHTML = '';
-      transcriptStarted = true;
     }
-  } catch(e) { console.error('Start error:', e); }
+  } catch(e) { console.error(e); }
 }
 
 function stopListening() {
   isListening = false;
+  clearTimeout(sendTimer);
+  flushBuffer();
   if (recognition) recognition.stop();
-  updateStatus('paused');
+  setStatus('paused');
   document.getElementById('btnStart').disabled = false;
   document.getElementById('btnStop').disabled = true;
-  flushTranscript();
 }
 
 function resetSession() {
   stopListening();
-  sessionId = 'session_' + Date.now();
-  currentTranscript = '';
-  pendingChunks = [];
-  transcriptStarted = false;
-  coachStarted = false;
-  document.getElementById('transcriptPanel').innerHTML = `
-    <div class="empty-state"><div class="icon">🎙️</div>
-    <p>Presiona <strong>Iniciar</strong> y usa el toggle <strong>Closer/Prospecto</strong> para identificar quién habla</p></div>`;
-  document.getElementById('coachPanel').innerHTML = `
-    <div class="empty-state"><div class="icon">🎯</div>
-    <p>Las sugerencias del coach aparecerán aquí conforme avance la conversación</p></div>`;
+  sessionId = 'sess_' + Date.now();
+  buffer = ''; transcriptLog = []; coachReady = false; msgCount = 0;
+  document.getElementById('transcriptPanel').innerHTML = '<div class="empty"><div class="icon">🎙️</div><p>Ingresa el nombre del prospecto y presiona <strong>Iniciar</strong></p></div>';
+  document.getElementById('coachPanel').innerHTML = '<div class="empty"><div class="icon">🎯</div><p>El coach analizará la conversación en tiempo real</p></div>';
+  document.getElementById('prospectLabel').textContent = 'esperando inicio...';
   document.getElementById('btnSummary').disabled = true;
-  updateStatus('off');
-  fetch(`${API_BASE}/api/reset`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sessionId })
-  }).catch(() => {});
+  setStatus('off');
+  fetch(`${API_BASE}/api/reset`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({sessionId}) }).catch(()=>{});
 }
 
-// ─── UI Updates ─────────────────────────────────────────────────────────────
-function updateStatus(state) {
-  const badge = document.getElementById('statusBadge');
-  const text = document.getElementById('statusText');
-  badge.className = 'status-badge ' + state;
-  const labels = { listening: 'Escuchando...', paused: 'Pausado', off: 'Inactivo' };
-  text.textContent = labels[state] || state;
+// ─── UI ───────────────────────────────────────────────────────────────────────
+function setStatus(s) {
+  const b = document.getElementById('statusBadge');
+  const t = document.getElementById('statusText');
+  b.className = 'status-badge ' + s;
+  t.textContent = {listening:'Escuchando...', paused:'Pausado', off:'Inactivo'}[s] || s;
 }
 
-function addTranscriptLine(text, speaker) {
+function renderTranscriptLine({time, speaker, text}) {
   const panel = document.getElementById('transcriptPanel');
-  panel.querySelectorAll('.transcript-current').forEach(el => el.classList.remove('transcript-current'));
-
-  // Remove interim line
-  const interim = panel.querySelector('.transcript-interim');
-  if (interim) interim.remove();
-
+  panel.querySelectorAll('.t-line:not(.is-interim)').forEach(el => el.style.borderLeftColor = '');
   const div = document.createElement('div');
-  const speakerClass = speaker === 'closer' ? 'transcript-closer' : 'transcript-prospect';
-  div.className = `transcript-line transcript-current ${speakerClass}`;
-
-  const time = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const labelClass = speaker === 'closer' ? 'speaker-closer' : 'speaker-prospect';
-  const labelText = speaker === 'closer' ? '🎙 Closer' : '👤 Prospecto';
-
-  div.innerHTML = `<div class="time">${time} <span class="speaker-label ${labelClass}">${labelText}</span></div>${escapeHtml(text)}`;
+  div.className = 't-line is-' + speaker;
+  const tagClass = speaker === 'closer' ? 'closer' : 'prospect';
+  const tagLabel = speaker === 'closer' ? '🎙 Yo' : '👤 Prospecto';
+  div.innerHTML = `<div class="t-meta"><span>${time}</span><span class="spk-tag ${tagClass}">${tagLabel}</span></div>${esc(text)}`;
   panel.appendChild(div);
   panel.scrollTop = panel.scrollHeight;
 }
 
-function updateCurrentLine(text) {
-  let current = document.querySelector('.transcript-interim');
+function showInterim(text) {
+  let el = document.getElementById('interimLine');
   const panel = document.getElementById('transcriptPanel');
-  if (!current) {
-    current = document.createElement('div');
-    current.className = 'transcript-line transcript-current transcript-interim';
-    panel.appendChild(current);
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'interimLine';
+    el.className = 't-line is-interim';
+    panel.appendChild(el);
   }
-  const labelClass = currentSpeaker === 'closer' ? 'speaker-closer' : 'speaker-prospect';
-  const labelText = currentSpeaker === 'closer' ? '🎙 Closer' : '👤 Prospecto';
-  current.innerHTML = `<div class="time" style="color: var(--green);">⏳ <span class="speaker-label ${labelClass}">${labelText}</span></div>${escapeHtml(text)}`;
+  const tagLabel = currentSpeaker === 'closer' ? '🎙 Yo' : '👤 Prospecto';
+  const tagClass = currentSpeaker === 'closer' ? 'closer' : 'prospect';
+  el.innerHTML = `<div class="t-meta"><span>⏳</span><span class="spk-tag ${tagClass}">${tagLabel}</span></div>${esc(text)}`;
   panel.scrollTop = panel.scrollHeight;
+}
+
+function removeInterim() {
+  const el = document.getElementById('interimLine');
+  if (el) el.remove();
 }
 
 function addCoachCard(text) {
   const panel = document.getElementById('coachPanel');
-  if (!coachStarted) { panel.innerHTML = ''; coachStarted = true; }
-
+  if (!coachReady) { panel.innerHTML = ''; coachReady = true; }
   const div = document.createElement('div');
   let type = 'tactic';
   if (text.includes('🔴') || text.includes('OBJECIÓN')) type = 'objection';
   else if (text.includes('🟡') || text.includes('SEÑAL')) type = 'signal';
   else if (text.includes('🟢') || text.includes('CIERRE')) type = 'close';
   else if (text.includes('⚠️') || text.includes('ALERTA')) type = 'alert';
+  else if (text.includes('🔍') || text.includes('INSIGHT')) type = 'insight';
   else if (text.includes('✅')) type = 'ok';
-
-  div.className = `coach-card ${type}`;
-  const time = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-  div.innerHTML = `${escapeHtml(text)}\n<div class="coach-time">${time}</div>`;
+  div.className = 'c-card ' + type;
+  div.innerHTML = esc(text) + `\n<div class="c-time">${now()}</div>`;
   panel.appendChild(div);
   panel.scrollTop = panel.scrollHeight;
-
-  if (['objection', 'close', 'alert'].includes(type)) playPing();
+  if (['objection','close','alert'].includes(type)) ping();
 }
 
-function showLoading() {
-  const panel = document.getElementById('coachPanel');
-  const loader = document.createElement('div');
-  loader.id = 'coachLoader';
-  loader.innerHTML = '<div class="loading"><span></span><span></span><span></span></div>';
-  panel.appendChild(loader);
-  panel.scrollTop = panel.scrollHeight;
-}
-
-function hideLoading() {
-  const loader = document.getElementById('coachLoader');
-  if (loader) loader.remove();
-}
-
-// ─── API Calls ──────────────────────────────────────────────────────────────
-async function sendToCoach(transcript) {
-  showLoading();
+// ─── API ──────────────────────────────────────────────────────────────────────
+async function sendToCoach(transcript, includeInsight = false) {
+  const loaderEl = document.createElement('div');
+  loaderEl.id = 'coachLoader';
+  loaderEl.innerHTML = '<div class="loading"><span></span><span></span><span></span></div>';
+  document.getElementById('coachPanel').appendChild(loaderEl);
   try {
     const res = await fetch(`${API_BASE}/api/coach`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId, transcript,
-        callType: document.getElementById('callType').value
-      })
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ sessionId, transcript, callType: document.getElementById('callType').value, includeInsight })
     });
     const data = await res.json();
-    hideLoading();
+    loaderEl.remove();
     if (data.coaching) addCoachCard(data.coaching);
-  } catch (e) {
-    hideLoading();
-    console.error('Coach API error:', e);
-    addCoachCard('⚠️ Error de conexión con el coach.');
+  } catch(e) {
+    loaderEl.remove();
+    addCoachCard('⚠️ Error de conexión.');
   }
 }
 
 async function requestSummary() {
-  // Stop listening first to flush everything
   if (isListening) stopListening();
-
-  const modal = document.getElementById('summaryModal');
+  document.getElementById('summaryModal').classList.add('show');
   const content = document.getElementById('summaryContent');
-  modal.classList.add('show');
-  content.innerHTML = '<div class="loading"><span></span><span></span><span></span></div> Generando resumen completo con transcripción...';
+  content.innerHTML = '<div class="loading"><span></span><span></span><span></span></div> Generando resumen...';
 
-  // Collect transcript from the UI
-  const lines = document.querySelectorAll('#transcriptPanel .transcript-line:not(.transcript-interim)');
-  const uiTranscript = Array.from(lines).map(line => {
-    const timeEl = line.querySelector('.time');
-    const labelEl = line.querySelector('.speaker-label');
-    const time = timeEl ? timeEl.textContent.trim().split(' ')[0] : '';
-    const speaker = labelEl ? labelEl.textContent.trim() : '';
-    const text = line.textContent.replace(timeEl?.textContent || '', '').trim();
-    return `[${time}] ${speaker}: ${text}`;
-  }).join('\n');
+  // Build clean transcript from transcriptLog
+  const transcript = transcriptLog.map(e =>
+    `[${e.time}] ${e.speaker === 'closer' ? '🎙 CLOSER' : '👤 PROSPECTO'}: ${e.text}`
+  ).join('\n');
+
+  const prospect = document.getElementById('prospectInfo').value.trim();
 
   try {
     const res = await fetch(`${API_BASE}/api/summary`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId,
-        callType: document.getElementById('callType').value,
-        uiTranscript
-      })
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ sessionId, callType: document.getElementById('callType').value, uiTranscript: transcript, prospectInfo: prospect })
     });
     const data = await res.json();
-    content.textContent = data.summary || 'No se pudo generar el resumen.';
-  } catch (e) {
-    content.textContent = 'Error al generar resumen: ' + e.message;
-  }
+    content.textContent = data.summary || 'No se pudo generar.';
+  } catch(e) { content.textContent = 'Error: ' + e.message; }
 }
 
-function closeSummary() {
-  document.getElementById('summaryModal').classList.remove('show');
-}
+function closeSummary() { document.getElementById('summaryModal').classList.remove('show'); }
 
 function copySummary() {
-  const text = document.getElementById('summaryContent').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.querySelector('.btn-copy');
-    btn.textContent = '✅ Copiado!';
-    setTimeout(() => btn.textContent = '📋 Copiar', 2000);
+  navigator.clipboard.writeText(document.getElementById('summaryContent').textContent).then(() => {
+    const b = document.querySelector('.btn-copy');
+    b.textContent = '✅ Copiado!';
+    setTimeout(() => b.textContent = '📋 Copiar', 2000);
   });
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-function playPing() {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function now() { return new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit', second:'2-digit'}); }
+function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+function ping() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.frequency.value = 800; osc.type = 'sine';
-    gain.gain.value = 0.1;
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-    osc.start(); osc.stop(ctx.currentTime + 0.3);
-  } catch(e) {}
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = 800; o.type = 'sine';
+    g.gain.value = 0.1; g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .3);
+    o.start(); o.stop(ctx.currentTime + .3);
+  } catch(_){}
 }
 
-// ─── Mini Mode & Popup ──────────────────────────────────────────────────────
-function openMiniWindow() {
-  const url = window.location.origin + '/copilot?mini=1';
-  window.open(url, 'SalesCopilotMini', 'width=380,height=600,top=100,right=0,resizable=yes,scrollbars=yes');
+function openMini() {
+  window.open(window.location.origin + '/copilot?mini=1', 'copilotMini', 'width=360,height=580,top=80,right=0,resizable=yes');
 }
 
-(function() {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('mini') === '1') document.body.classList.add('mini-mode');
-})();
+// Mini mode auto-detect
+if (new URLSearchParams(location.search).get('mini') === '1') {
+  document.body.classList.add('mini');
+}
 
-// ─── Keyboard Shortcuts ─────────────────────────────────────────────────────
-document.addEventListener('keydown', (e) => {
-  // Ctrl+Space: toggle listening
-  if (e.code === 'Space' && e.ctrlKey) { e.preventDefault(); isListening ? stopListening() : startListening(); }
-  // Ctrl+S: summary
-  if (e.code === 'KeyS' && e.ctrlKey) { e.preventDefault(); requestSummary(); }
-  // Tab: switch speaker (when listening)
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.code === 'Space') { e.preventDefault(); isListening ? stopListening() : startListening(); }
+  if (e.ctrlKey && e.code === 'KeyS')  { e.preventDefault(); requestSummary(); }
   if (e.code === 'Tab' && isListening) { e.preventDefault(); setSpeaker(currentSpeaker === 'closer' ? 'prospect' : 'closer'); }
 });
 </script>
-
 </body>
 </html>

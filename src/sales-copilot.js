@@ -71,40 +71,25 @@ function getSession(sessionId) {
 }
 
 // ─── Claude API Call (Coach - Fast) ─────────────────────────────────────────
-async function askCoach(sessionId, newTranscript, callType) {
+async function askCoach(sessionId, newTranscript, callType, includeInsight = false) {
   const session = getSession(sessionId);
 
-  const contextPrefix = callType
-    ? `[TIPO: ${callType.toUpperCase()}] `
+  const contextPrefix = callType ? `[TIPO: ${callType.toUpperCase()}] ` : '';
+  const insightRequest = includeInsight
+    ? '\n\nAdemás del coaching, agrega al final un bloque separado:\n🔍 INSIGHT\n→ (perfil del prospecto: tipo de comprador, objeciones reales, probabilidad de cierre 1-10, qué necesita escuchar para cerrar)'
     : '';
-
-  // Store full transcript with speaker labels
-  const time = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  session.fullTranscript.push(`[${time}] ${newTranscript}`);
 
   session.messages.push({
     role: 'user',
-    content: `${contextPrefix}${newTranscript}\n\n¿Acción para el closer? Si nada, solo "✅ Bien, sigue así"`
+    content: `${contextPrefix}${newTranscript}\n\n¿Acción para el closer? Si nada, solo "✅ Bien, sigue así"${insightRequest}`
   });
 
-  // Keep last 30 messages for context
-  if (session.messages.length > 30) {
-    session.messages = session.messages.slice(-30);
-  }
+  if (session.messages.length > 30) session.messages = session.messages.slice(-30);
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: COACH_MODEL,
-      max_tokens: 200,
-      system: SALES_COACH_SYSTEM,
-      messages: session.messages
-    })
+    headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: COACH_MODEL, max_tokens: 300, system: SALES_COACH_SYSTEM, messages: session.messages })
   });
 
   if (!response.ok) {
@@ -119,16 +104,15 @@ async function askCoach(sessionId, newTranscript, callType) {
 }
 
 // ─── Generate Call Summary ──────────────────────────────────────────────────
-async function generateSummary(sessionId, callType, uiTranscript) {
+async function generateSummary(sessionId, callType, uiTranscript, prospectInfo) {
   const session = getSession(sessionId);
-
-  // Use UI transcript (with speaker labels) if available, fallback to server transcript
   const transcriptText = uiTranscript || session.fullTranscript.join('\n');
+  const prospectContext = prospectInfo ? `\nPROSPECTO: ${prospectInfo}` : '';
 
   const summaryMessages = [
     {
       role: 'user',
-      content: `Analiza esta llamada de ${callType || 'ventas'} y genera un resumen completo.
+      content: `Analiza esta llamada de ${callType || 'ventas'} y genera un resumen completo.${prospectContext}
 
 TRANSCRIPCIÓN COMPLETA (con identificación de speakers):
 ---
@@ -237,13 +221,13 @@ const server = createServer(async (req, res) => {
     req.on('data', c => body += c);
     req.on('end', async () => {
       try {
-        const { sessionId, transcript, callType } = JSON.parse(body);
+        const { sessionId, transcript, callType, includeInsight } = JSON.parse(body);
         if (!transcript?.trim()) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'transcript vacío' }));
           return;
         }
-        const coaching = await askCoach(sessionId || 'default', transcript, callType);
+        const coaching = await askCoach(sessionId || 'default', transcript, callType, includeInsight);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ coaching }));
       } catch (e) {
@@ -261,8 +245,8 @@ const server = createServer(async (req, res) => {
     req.on('data', c => body += c);
     req.on('end', async () => {
       try {
-        const { sessionId, callType, uiTranscript } = JSON.parse(body);
-        const summary = await generateSummary(sessionId || 'default', callType, uiTranscript);
+        const { sessionId, callType, uiTranscript, prospectInfo } = JSON.parse(body);
+        const summary = await generateSummary(sessionId || 'default', callType, uiTranscript, prospectInfo);
         sessions.delete(sessionId || 'default');
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ summary }));
