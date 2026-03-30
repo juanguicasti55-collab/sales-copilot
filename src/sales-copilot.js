@@ -14,71 +14,47 @@ if (!ANTHROPIC_API_KEY) {
   console.warn('\n⚠️ ANTHROPIC_API_KEY no configurada — el coach no funcionará hasta que la agregues');
 }
 
+// Modelo rápido para coaching en vivo (Haiku = respuesta en ~1s)
+const COACH_MODEL = 'claude-haiku-4-5-20251001';
+// Modelo completo para resúmenes (Sonnet = más detalle)
+const SUMMARY_MODEL = 'claude-sonnet-4-20250514';
+
 // ─── Sales Coach System Prompt ──────────────────────────────────────────────
-const SALES_COACH_SYSTEM = `Eres un experto en ventas y coaching de closers en tiempo real. Tu rol es ser el "susurro al oído" del closer durante una llamada de ventas en vivo.
+const SALES_COACH_SYSTEM = `Eres un coach de ventas en tiempo real. Tu rol: susurrarle al closer qué hacer AHORA.
 
-## TU CONTEXTO
-- Estás escuchando una conversación de ventas en tiempo real
-- El closer (tu usuario) necesita orientación INMEDIATA
-- Cada segundo cuenta — sé DIRECTO y ACCIONABLE
+FORMATO OBLIGATORIO (máximo 3 líneas):
+[EMOJI] TIPO
+→ "Frase exacta para decir"
+(Por qué funciona)
 
-## CÓMO RESPONDER
-1. **Formato ultra-corto**: Máximo 2-3 líneas por sugerencia
-2. **Accionable**: Di EXACTAMENTE qué decir o hacer
-3. **Categorizado**: Usa estos tags:
-   - 🔴 OBJECIÓN → cómo resolverla
-   - 🟡 SEÑAL → oportunidad que el closer debe aprovechar
-   - 🟢 CIERRE → momento para cerrar o avanzar
-   - 💡 TÁCTICA → técnica específica para usar ahora
-   - ⚠️ ALERTA → el closer está cometiendo un error
+EMOJIS: 🔴 OBJECIÓN | 🟡 SEÑAL | 🟢 CIERRE | 💡 TÁCTICA | ⚠️ ALERTA
 
-## TÉCNICAS QUE DOMINAS
-- Detección de señales de compra
-- Preguntas de cierre (alternativa, asunción, urgencia)
-- Rapport y conexión emocional
-- Reencuadre de valor vs precio
-- Técnica del espejo y validación
-- Cierre por eliminación de riesgo
-- Storytelling de casos de éxito
+Los fragmentos vienen etiquetados como [CLOSER] o [PROSPECTO] — el closer es TU usuario, el prospecto es a quien le vendes.
+Solo da coaching cuando el PROSPECTO dice algo accionable o cuando el CLOSER comete un error.
+Si no hay nada accionable responde SOLO: ✅ Bien, sigue así
 
-## MANUAL MAESTRO DE OBJECIONES (USA ESTAS ESTRATEGIAS EXACTAS)
+MANUAL DE OBJECIONES — USA ESTAS ESTRATEGIAS:
 
-### OBJECIÓN: "NO TENGO DINERO"
-- Normalización: "El 40% de nuestros clientes dijeron lo mismo, pero encontraron la forma. ¿Esto es algo que realmente quieres hacer?" → Si dice sí: "Cuando uno realmente quiere, el dinero aparece. Hagamos un apartado de $1,000 para asegurar tu lugar."
-- Promesa: "Si pudiera garantizarte que con esta metodología vas a lograr [promesa], ¿harías un apartado en esta misma llamada?" → Si no tiene capital: "Solo necesitamos un apartado simbólico. ¿Qué te queda mejor: $500 o $1,000?"
-- Costo de oportunidad: "Si el problema es falta de clientes, vas a pagar un precio igual. Ese precio puede ser con tiempo o con dinero. ¿Qué prefieres? ¿Tardar meses o invertir para solucionarlo lo antes posible?"
-- Retorno: "Si existiera un negocio donde inviertes $100 y te regresa $800, ¿dirías que es una buena inversión?" → Si dice sí: "Hagamos un apartado del 10% para congelar tu cupo."
-- Reversión: "¿Con cuánto sí te sientes cómodo para congelar tu cupo en esta llamada?" → Usa su respuesta para cerrar.
-- Compromiso: "¿Esto es algo que realmente quieres hacer?" → Si dice sí: "Haz una lista de 40 formas de conseguir esta cantidad en 24 horas. La hacemos juntos y arrancamos hoy."
+"NO TENGO DINERO":
+- "El 40% de nuestros clientes dijeron lo mismo. ¿Esto es algo que realmente quieres hacer?" → "Hagamos un apartado de $1,000"
+- "Si pudiera garantizarte [promesa], ¿harías un apartado en esta llamada?" → "¿$500 o $1,000?"
+- "Vas a pagar un precio igual: con tiempo o con dinero. ¿Qué prefieres?"
+- "Si inviertes $100 y te regresa $800, ¿es buena inversión?" → "Apartado del 10%"
+- "¿Con cuánto sí te sientes cómodo para congelar tu cupo?"
 
-### OBJECIÓN: "LO TENGO QUE HABLAR CON MI SOCIO"
-- Consultoría de socios: "Hagamos una sesión estratégica con tu socio donde les presento el plan a ambos y puedan decidir juntos."
-- Futuro perfecto: "Si en 90 días su negocio ya no tuviera este problema y además vendieran el triple, ¿tu socio estaría feliz?" → Si dice sí: "Hagamos un primer pago del 50% y pasado mañana hablamos con tu socio."
-- 50/50: "¿Cómo es el reparto? ¿50/50?" → "Tú haces el primer pago del 50% y tu socio decide por el otro 50%. Si no está de acuerdo, devolución total ese mismo día."
-- La gripa: "Si tu socio se enfermara y tuvieras que comprar medicina, ¿le pedirías permiso? Lo mismo pasa aquí. Esto es para el bien del negocio."
+"HABLAR CON MI SOCIO":
+- "Hagamos sesión estratégica con tu socio para decidir juntos"
+- "Si en 90 días vendieran el triple, ¿tu socio estaría feliz?" → "Primer pago del 50%"
+- "Tú haces el 50%, tu socio decide el otro 50%. Si no acepta, devolución total"
+- "Si tu socio se enfermara, ¿le pedirías permiso para comprar medicina?"
 
-### OBJECIÓN: "DÉJAME PENSARLO / NO TOMO DECISIONES AL MOMENTO"
-- Descubrir la verdad: "Si me dices esto, es porque hay algo que no quedó claro. ¿Qué hace falta para que hagamos negocios hoy mismo?" → Resuelves dudas → cierras con "Si te pudiera garantizar..."
-- Razones pro vs contra: Pide razones para NO entrar (A,B,C) y luego razones para SÍ entrar (A,B,C). → "Los beneficios son claramente mayores. Hagamos un primer pago del 30%, te doy acceso hoy, y si no te convence, te devuelvo el apartado."
-- Dentro decides + garantía: "¿Esto es algo que realmente quieres hacer?" → "Apartado del 30%, acceso a las primeras clases hoy, y si no te convence hacemos devolución."
-- Storyselling: Inserta caso de éxito relevante → "Si realmente quieres hacerlo, el siguiente paso es tomar acción. Primer pago del 50% y arrancamos hoy."
-- La verdadera razón: "Me dijiste que lo quieres hacer, que es prioridad, que el presupuesto no es problema... ¿cuál es la verdadera razón por la que no puedes decidir ahora?"
+"DÉJAME PENSARLO":
+- "¿Qué hace falta para que hagamos negocios hoy?"
+- Pide razones para NO entrar y para SÍ → "Los beneficios son mayores. Primer pago del 30%"
+- "Apartado del 30%, acceso hoy, si no te convence hacemos devolución"
+- "Me dijiste que lo quieres hacer... ¿cuál es la verdadera razón?"
 
-## REGLAS CRÍTICAS
-- NUNCA des respuestas largas — el closer está EN VIVO
-- SIEMPRE da la frase exacta que puede decir, tomándola del manual de objeciones cuando aplique
-- Si detectas una objeción, da la respuesta INMEDIATAMENTE usando las estrategias del manual
-- Si el prospecto muestra interés, indica que es momento de cerrar
-- Adapta el tono: si el prospecto es analítico, da datos. Si es emocional, conecta con sentimientos
-- Ofrece 2 estrategias del manual cuando detectes una objeción: la mejor para el contexto + una alternativa
-- Responde SIEMPRE en español
-
-## FORMATO DE RESPUESTA
-Usa EXACTAMENTE este formato (sin markdown extra):
-
-[EMOJI TAG] Tipo de intervención
-→ "Frase exacta que el closer debe decir"
-(Por qué funciona: explicación de 1 línea)`;
+Da 2 opciones cuando detectes objeción. Responde SIEMPRE en español.`;
 
 // ─── Conversation Memory ────────────────────────────────────────────────────
 const sessions = new Map();
@@ -88,33 +64,32 @@ function getSession(sessionId) {
     sessions.set(sessionId, {
       messages: [],
       fullTranscript: [],
-      context: { tipo: null, objeciones: [], señales: [], fase: 'apertura' },
       created: Date.now()
     });
   }
   return sessions.get(sessionId);
 }
 
-// ─── Claude API Call ────────────────────────────────────────────────────────
+// ─── Claude API Call (Coach - Fast) ─────────────────────────────────────────
 async function askCoach(sessionId, newTranscript, callType) {
   const session = getSession(sessionId);
 
   const contextPrefix = callType
-    ? `[TIPO DE LLAMADA: ${callType.toUpperCase()}] `
+    ? `[TIPO: ${callType.toUpperCase()}] `
     : '';
 
-  // Store full transcript
+  // Store full transcript with speaker labels
   const time = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   session.fullTranscript.push(`[${time}] ${newTranscript}`);
 
   session.messages.push({
     role: 'user',
-    content: `${contextPrefix}Nuevo fragmento de la conversación en vivo:\n\n"${newTranscript}"\n\n¿Qué debe hacer el closer AHORA? Si no hay nada accionable, responde "✅ Bien, sigue así" y nada más.`
+    content: `${contextPrefix}${newTranscript}\n\n¿Acción para el closer? Si nada, solo "✅ Bien, sigue así"`
   });
 
-  // Keep last 20 messages to avoid token overflow
-  if (session.messages.length > 20) {
-    session.messages = session.messages.slice(-20);
+  // Keep last 30 messages for context
+  if (session.messages.length > 30) {
+    session.messages = session.messages.slice(-30);
   }
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -125,8 +100,8 @@ async function askCoach(sessionId, newTranscript, callType) {
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 300,
+      model: COACH_MODEL,
+      max_tokens: 200,
       system: SALES_COACH_SYSTEM,
       messages: session.messages
     })
@@ -139,82 +114,83 @@ async function askCoach(sessionId, newTranscript, callType) {
 
   const data = await response.json();
   const assistantMsg = data.content[0].text;
-
   session.messages.push({ role: 'assistant', content: assistantMsg });
-
   return assistantMsg;
 }
 
 // ─── Generate Call Summary ──────────────────────────────────────────────────
-async function generateSummary(sessionId, callType) {
+async function generateSummary(sessionId, callType, uiTranscript) {
   const session = getSession(sessionId);
 
-  const fullTranscriptText = session.fullTranscript.join('\n');
+  // Use UI transcript (with speaker labels) if available, fallback to server transcript
+  const transcriptText = uiTranscript || session.fullTranscript.join('\n');
 
   const summaryMessages = [
-    ...session.messages,
     {
       role: 'user',
-      content: `La llamada ha terminado.
+      content: `Analiza esta llamada de ${callType || 'ventas'} y genera un resumen completo.
 
-TRANSCRIPCIÓN COMPLETA DE LA LLAMADA:
+TRANSCRIPCIÓN COMPLETA (con identificación de speakers):
 ---
-${fullTranscriptText}
+${transcriptText}
 ---
 
-Genera un RESUMEN COMPLETO de la llamada con este formato:
+Genera el resumen con EXACTAMENTE este formato:
 
 ## Resumen de Llamada — ${callType || 'Ventas'}
 
 **Fecha:** ${new Date().toLocaleDateString('es-ES')}
 **Tipo:** ${callType || 'No especificado'}
-**Duración aprox:** (estima basado en la conversación)
 
 ### Resumen Ejecutivo
-(2-3 oraciones sobre qué pasó)
+(2-3 oraciones)
 
 ### Puntos Clave
-- (bullets con lo más importante)
+- (bullets)
 
 ${callType === 'ventas' ? `### Objeciones Detectadas
-- (lista de objeciones y cómo se manejaron)
+- Objeción: ... | Cómo se manejó: ... | Resultado: ...
 
 ### Nivel de Interés del Prospecto
-(1-10 y por qué)
+(1-10 con justificación)
 
 ### Resultado
-(¿Se cerró? ¿Siguiente paso?)
+(¿Se cerró? ¿Qué sigue?)
 
 ### Feedback para el Closer
-- (qué hizo bien)
-- (qué puede mejorar)` : ''}
+✅ Bien hecho:
+- ...
+⚠️ Puede mejorar:
+- ...` : ''}
 
 ${callType === 'onboarding' ? `### Estado del Onboarding
-(en qué fase quedó)
+(fase actual)
 
 ### Tareas para el Cliente
-- [ ] (checklist)
+- [ ] ...
 
 ### Tareas Internas
-- [ ] (checklist)` : ''}
+- [ ] ...` : ''}
 
-${callType === 'consultoria' || callType === 'mentoria' ? `### Recomendaciones Dadas
-- (lista)
+${callType === 'consultoria' ? `### Recomendaciones Dadas
+- ...
 
 ### Tareas para el Cliente
-- [ ] (checklist)
+- [ ] ...
 
 ### Tareas para Ti
-- [ ] (checklist)
+- [ ] ...
 
 ### Insights
-- (patrones o hallazgos importantes)` : ''}
+- ...` : ''}
 
 ### Próximos Pasos
-- (acciones concretas con responsable)
+- [ ] (acción + responsable + fecha)
+
+---
 
 ### Transcripción Completa
-${fullTranscriptText}`
+${transcriptText}`
     }
   ];
 
@@ -226,9 +202,9 @@ ${fullTranscriptText}`
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
-      system: 'Eres un experto en análisis de llamadas de ventas, onboarding y consultoría. Genera resúmenes estructurados, accionables y profesionales. Responde siempre en español.',
+      model: SUMMARY_MODEL,
+      max_tokens: 4000,
+      system: 'Eres un experto en análisis de llamadas de ventas, onboarding y consultoría. Genera resúmenes estructurados, accionables y profesionales. Incluye SIEMPRE la transcripción completa al final. Responde en español.',
       messages: summaryMessages
     })
   });
@@ -239,13 +215,7 @@ ${fullTranscriptText}`
 }
 
 // ─── HTTP Server ────────────────────────────────────────────────────────────
-const MIME = {
-  '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript',
-  '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml',
-};
-
 const server = createServer(async (req, res) => {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -261,7 +231,7 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // API: Analyze transcript chunk
+  // API: Coach (fast)
   if (url.pathname === '/api/coach' && req.method === 'POST') {
     let body = '';
     req.on('data', c => body += c);
@@ -285,15 +255,14 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // API: Generate summary
+  // API: Summary (detailed)
   if (url.pathname === '/api/summary' && req.method === 'POST') {
     let body = '';
     req.on('data', c => body += c);
     req.on('end', async () => {
       try {
-        const { sessionId, callType } = JSON.parse(body);
-        const summary = await generateSummary(sessionId || 'default', callType);
-        // Clear session after summary
+        const { sessionId, callType, uiTranscript } = JSON.parse(body);
+        const summary = await generateSummary(sessionId || 'default', callType, uiTranscript);
         sessions.delete(sessionId || 'default');
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ summary }));
@@ -306,7 +275,7 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // API: Reset session
+  // API: Reset
   if (url.pathname === '/api/reset' && req.method === 'POST') {
     let body = '';
     req.on('data', c => body += c);
@@ -319,12 +288,12 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  // 404
   res.writeHead(404);
   res.end('Not found');
 });
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🎯 Sales Copilot corriendo en http://0.0.0.0:${PORT}`);
-  console.log('   Abre esta URL en tu navegador durante la llamada\n');
+  console.log(`   Coach: ${COACH_MODEL} (rápido)`);
+  console.log(`   Resumen: ${SUMMARY_MODEL} (detallado)\n`);
 });
